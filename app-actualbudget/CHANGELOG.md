@@ -1,6 +1,12 @@
 <!-- https://developers.home-assistant.io/docs/apps/presentation#keeping-a-changelog -->
 # Changelog
 
+## 0.1.1
+
+- Disable Home Assistant Ingress by default and document direct port access as the supported mode.
+- Change default hostname binding from `::` to `0.0.0.0` for common Home Assistant setups.
+- Improve maintainer workflows with `workflow_dispatch` support and optional manual publish control.
+
 ## 0.1.0
 
 - Initial Actual Budget Home Assistant app release (in development).

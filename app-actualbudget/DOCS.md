@@ -10,10 +10,9 @@ Follow these steps to install this app on Home Assistant:
 2. Add your custom repository URL that contains this app.
 3. Open **app-actualbudget** and click **Install**.
 
-## Access Modes
+## Access
 
-- **Ingress** (recommended): open the app from Home Assistant UI.
-- **Direct port**: open `http://<home-assistant-host>:5006` (or your mapped port).
+- **Direct port**: open `https://<home-assistant-host>:5006` (recommended), or `http://<home-assistant-host>:5006` for non-TLS local testing.
 
 ## Ports
 
@@ -40,6 +39,12 @@ These options map directly to Actual server environment variables:
 For all server settings, see:
 https://actualbudget.org/docs/config/
 
+Default app options are optimized for common Home Assistant setups:
+
+- `hostname` defaults to `0.0.0.0` (IPv4 bind on all interfaces)
+- `port` defaults to `5006`
+- `https_key`/`https_cert` are empty by default and should be set when you want HTTPS directly on the app port
+
 ## TLS Certificate Files
 
 When setting `https_key` and `https_cert`:
@@ -51,7 +56,7 @@ When setting `https_key` and `https_cert`:
 ## First start
 
 1. Install and start the app.
-2. Open the app via Ingress, or open `http://<home-assistant-host>:5006`.
+2. Open the app using direct access at `https://<home-assistant-host>:5006` (or `http://<home-assistant-host>:5006`).
 3. Complete Actual Budget onboarding and create your server password.
 
 ## Upgrade and persistence
@@ -62,8 +67,8 @@ When setting `https_key` and `https_cert`:
 ## Manual validation checklist
 
 1. Install and start the app from your repository.
-2. Open the app via Ingress and confirm the Actual UI loads.
-3. Open direct port access (`http://<ha-host>:5006`) and confirm it loads.
+2. Open direct port access (`https://<ha-host>:5006`) and confirm it loads.
+3. (Optional) Open `http://<ha-host>:5006` and confirm it loads for non-TLS testing.
 4. Restart the app and confirm existing data is still present.
 5. Set an invalid `https_key` or `https_cert` path and confirm startup fails fast with clear logs.
 6. Restore valid TLS configuration and confirm clean startup logs with add-on and Actual server version lines.

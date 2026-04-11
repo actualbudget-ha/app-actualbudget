@@ -1,5 +1,5 @@
 ---
-version: 0.1.0
+version: 0.1.1
 slug: app-actualbudget
 name: app-actualbudget
 description: Self-hosted Actual Budget server for Home Assistant.
@@ -11,8 +11,7 @@ image: ghcr.io/actualbudget-ha/app-actualbudget
 stage: experimental
 startup: services
 init: false
-ingress: true
-ingress_port: 5006
+ingress: false
 panel_icon: mdi:wallet
 ports:
   5006/tcp: 5006
@@ -23,7 +22,7 @@ map:
   - share:rw
 options:
   port: 5006
-  hostname: "::"
+  hostname: "0.0.0.0"
   upload_file_sync_size_limit_mb: 20
   upload_sync_encrypted_file_sync_size_limit_mb: 50
   upload_file_size_limit_mb: 20

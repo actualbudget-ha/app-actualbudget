@@ -8,8 +8,8 @@ Self-hosted Actual Budget server for Home Assistant.
 ## About
 
 This app (formerly known as add-on) runs the official Actual Budget server.
-It exposes the Actual web app through Home Assistant Ingress and optional direct
-port access, and stores persistent data in the app data directory (`/data`).
+It exposes the Actual web app via direct port access and stores persistent data
+in the app data directory (`/data`).
 
 ## Documentation
 
