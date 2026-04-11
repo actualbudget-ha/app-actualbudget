@@ -1,0 +1,30 @@
+name: Smoke Test
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  smoke-test:
+    name: Build and run smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⤵️ Check out code from GitHub
+        uses: actions/checkout@v6.0.2
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: ⚡ Set up uv
+        uses: astral-sh/setup-uv@v6.7.0
+        with:
+          enable-cache: true
+
+      - name: 🧪 Run smoke test
+        run: uv run python scripts/smoke_test.py

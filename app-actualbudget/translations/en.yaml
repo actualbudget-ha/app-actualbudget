@@ -1,0 +1,28 @@
+configuration:
+  port:
+    name: Port
+    description: "Port that the Actual server listens on."
+  hostname:
+    name: Hostname
+    description: "Hostname/interface for the Actual server, for example :: or 0.0.0.0."
+  upload_file_sync_size_limit_mb:
+    name: Upload Sync File Limit (MB)
+    description: "Maximum allowed sync file upload size in MB."
+  upload_sync_encrypted_file_sync_size_limit_mb:
+    name: Encrypted Sync File Limit (MB)
+    description: "Maximum allowed encrypted sync file upload size in MB."
+  upload_file_size_limit_mb:
+    name: General Upload File Limit (MB)
+    description: "Maximum allowed uploaded file size in MB."
+  https_key:
+    name: HTTPS Key Path
+    description: "Optional path to HTTPS private key file (for example /ssl/privkey.pem)."
+  https_cert:
+    name: HTTPS Certificate Path
+    description: "Optional path to HTTPS certificate file (for example /ssl/fullchain.pem)."
+  log_level:
+    name: Startup Log Level
+    description: "Verbosity for app wrapper startup logs."
+  extra_env_vars:
+    name: Extra Environment Variables
+    description: "Optional KEY=VALUE entries exported before starting Actual server."

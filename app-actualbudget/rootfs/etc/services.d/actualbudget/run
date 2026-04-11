@@ -1,0 +1,111 @@
+#!/usr/bin/with-contenv bashio
+# shellcheck shell=bash
+# ==============================================================================
+# Start Actual Budget service
+# ==============================================================================
+set -euo pipefail
+
+declare app_version
+declare actual_server_version
+declare port
+declare hostname
+declare upload_file_sync_size_limit_mb
+declare upload_sync_encrypted_file_sync_size_limit_mb
+declare upload_file_size_limit_mb
+declare https_key
+declare https_cert
+declare log_level
+declare extra_env_count
+declare env_entry
+declare env_name
+declare env_value
+declare has_supervisor
+
+read_config() {
+    local key=$1
+    local value
+
+    value=''
+    if [[ "${has_supervisor}" == 'true' ]]; then
+        value="$(bashio::config "${key}" 2>/dev/null || true)"
+    fi
+
+    if [[ -z "${value}" || "${value}" == "null" ]] && [[ -f /data/options.json ]]; then
+        value="$(jq -er ".${key}" /data/options.json 2>/dev/null || true)"
+    fi
+
+    printf '%s' "${value}"
+}
+
+config_or_default() {
+    local key=$1
+    local default_value=$2
+    local value
+
+    value="$(read_config "${key}")"
+    if [[ -z "${value}" ]] || [[ "${value}" == "null" ]]; then
+        printf '%s' "${default_value}"
+        return
+    fi
+
+    printf '%s' "${value}"
+}
+
+app_version="${APP_VERSION:-unknown}"
+actual_server_version="$(node -p "require('/app/package.json').version" 2>/dev/null || true)"
+has_supervisor='false'
+if [[ -n "${SUPERVISOR_TOKEN:-}" ]]; then
+    has_supervisor='true'
+fi
+
+port="$(config_or_default 'port' '5006')"
+hostname="$(config_or_default 'hostname' '::')"
+upload_file_sync_size_limit_mb="$(config_or_default 'upload_file_sync_size_limit_mb' '20')"
+upload_sync_encrypted_file_sync_size_limit_mb="$(config_or_default 'upload_sync_encrypted_file_sync_size_limit_mb' '50')"
+upload_file_size_limit_mb="$(config_or_default 'upload_file_size_limit_mb' '20')"
+https_key="$(config_or_default 'https_key' '')"
+https_cert="$(config_or_default 'https_cert' '')"
+log_level="$(config_or_default 'log_level' 'info')"
+
+export ACTUAL_PORT="${port}"
+export ACTUAL_HOSTNAME="${hostname}"
+export ACTUAL_UPLOAD_FILE_SYNC_SIZE_LIMIT_MB="${upload_file_sync_size_limit_mb}"
+export ACTUAL_UPLOAD_SYNC_ENCRYPTED_FILE_SYNC_SIZE_LIMIT_MB="${upload_sync_encrypted_file_sync_size_limit_mb}"
+export ACTUAL_UPLOAD_FILE_SIZE_LIMIT_MB="${upload_file_size_limit_mb}"
+export BASHIO_LOG_LEVEL="${log_level}"
+
+if [[ -n "${https_key}" ]]; then
+    export ACTUAL_HTTPS_KEY="${https_key}"
+fi
+
+if [[ -n "${https_cert}" ]]; then
+    export ACTUAL_HTTPS_CERT="${https_cert}"
+fi
+
+extra_env_count="$(read_config 'extra_env_vars | length')"
+if ! [[ "${extra_env_count}" =~ ^[0-9]+$ ]]; then
+    extra_env_count=0
+fi
+for (( i=0; i < extra_env_count; i++ )); do
+    env_entry="$(read_config "extra_env_vars[${i}]")"
+    env_name="${env_entry%%=*}"
+    env_value="${env_entry#*=}"
+    export "${env_name}=${env_value}"
+    bashio::log.info "Exported extra environment variable: ${env_name}"
+done
+
+bashio::log.blue '-----------------------------------------------------------'
+bashio::log.blue ' Add-on: app-actualbudget'
+bashio::log.blue ' Self-hosted Actual Budget server for Home Assistant'
+bashio::log.blue '-----------------------------------------------------------'
+bashio::log.blue " Add-on version: ${app_version}"
+
+if [[ -n "${actual_server_version}" ]]; then
+    bashio::log.blue " Actual server version: ${actual_server_version}"
+fi
+
+bashio::log.blue " Startup log level: ${log_level}"
+bashio::log.blue '-----------------------------------------------------------'
+bashio::log.info "Starting Actual Budget server"
+
+exec node /app/app.js

@@ -1,0 +1,44 @@
+---
+version: 0.1.0
+slug: app-actualbudget
+name: app-actualbudget
+description: Self-hosted Actual Budget server for Home Assistant.
+url: https://github.com/actualbudget-ha/app-actualbudget/tree/main/app-actualbudget
+arch:
+  - aarch64
+  - amd64
+image: ghcr.io/actualbudget-ha/app-actualbudget
+stage: experimental
+startup: services
+init: false
+ingress: true
+ingress_port: 5006
+panel_icon: mdi:wallet
+ports:
+  5006/tcp: 5006
+ports_description:
+  5006/tcp: Actual Budget web interface
+map:
+  - ssl:ro
+  - share:rw
+options:
+  port: 5006
+  hostname: "::"
+  upload_file_sync_size_limit_mb: 20
+  upload_sync_encrypted_file_sync_size_limit_mb: 50
+  upload_file_size_limit_mb: 20
+  https_key: ""
+  https_cert: ""
+  log_level: info
+  extra_env_vars: []
+schema:
+  port: port?
+  hostname: str?
+  upload_file_sync_size_limit_mb: int?
+  upload_sync_encrypted_file_sync_size_limit_mb: int?
+  upload_file_size_limit_mb: int?
+  https_key: str?
+  https_cert: str?
+  log_level: list(debug|info|warning|error)?
+  extra_env_vars:
+    - "match(^[A-Za-z_][A-Za-z0-9_]*=.*$)?"

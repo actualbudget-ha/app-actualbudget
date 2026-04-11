@@ -1,0 +1,93 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  find:
+    name: Find apps
+    runs-on: ubuntu-latest
+    outputs:
+      addons: ${{ steps.addons.outputs.addons_list }}
+    steps:
+      - name: ⤵️ Check out code from GitHub
+        uses: actions/checkout@v6.0.2
+
+      - name: 🔍 Find app directories
+        id: addons
+        uses: home-assistant/actions/helpers/find-addons@master
+
+  lint:
+    name: Lint app ${{ matrix.path }}
+    runs-on: ubuntu-latest
+    needs: find
+    strategy:
+      matrix:
+        path: ${{ fromJson(needs.find.outputs.addons) }}
+    steps:
+      - name: ⤵️ Check out code from GitHub
+        uses: actions/checkout@v6.0.2
+
+      - name: 🚀 Run Home Assistant App Lint
+        uses: frenck/action-addon-linter@v2.21
+        with:
+          path: "./${{ matrix.path }}"
+
+  hadolint:
+    name: hadolint
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⤵️ Check out code from GitHub
+        uses: actions/checkout@v6.0.2
+
+      - name: 🐳 Run hadolint
+        run: |
+          shopt -s globstar
+          for dockerfile in **/Dockerfile; do
+            echo "Linting: ${dockerfile}"
+            docker run --rm -i \
+              -v "$(pwd)/.hadolint.yaml:/.hadolint.yaml:ro" \
+              hadolint/hadolint:v2.12.0 < "${dockerfile}"
+          done
+
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⤵️ Check out code from GitHub
+        uses: actions/checkout@v6.0.2
+
+      - name: 🐚 Run shellcheck
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          additional_files: >-
+            app-actualbudget/rootfs/etc/cont-init.d/00-validate.sh
+            app-actualbudget/rootfs/etc/services.d/actualbudget/run
+            app-actualbudget/rootfs/etc/services.d/actualbudget/finish
+
+  version-check:
+    name: Version consistency
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⤵️ Check out code from GitHub
+        uses: actions/checkout@v6.0.2
+
+      - name: 🔎 Validate config/changelog version
+        run: |
+          config_version="$(grep -E '^version:' app-actualbudget/config.yaml | head -n 1 | sed -E "s/version:[[:space:]]*\"?([^\"[:space:]]+)\"?/\1/")"
+          changelog_version="$(grep -E '^## ' app-actualbudget/CHANGELOG.md | head -n 1 | sed -E 's/^##[[:space:]]*//')"
+
+          echo "Config version: ${config_version}"
+          echo "Changelog version: ${changelog_version}"
+
+          if [[ "${config_version}" != "${changelog_version}" ]]; then
+            echo "Version mismatch between config.yaml and CHANGELOG.md"
+            exit 1
+          fi

@@ -1,0 +1,15 @@
+#!/usr/bin/with-contenv bashio
+# shellcheck shell=bash
+# ==============================================================================
+# Take down the S6 supervision tree when Actual Budget fails
+# ==============================================================================
+
+declare app_exit_code="${1}"
+
+if [[ "${app_exit_code}" -ne 0 ]] && [[ "${app_exit_code}" -ne 256 ]]; then
+    bashio::log.warning "Actual Budget exited with code ${app_exit_code}, halting app"
+    echo "${app_exit_code}" > /run/s6-linux-init-container-results/exitcode
+    exec /run/s6/basedir/bin/halt
+fi
+
+bashio::log.info "Service restart after closing"
