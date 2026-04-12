@@ -1,6 +1,10 @@
 <!-- https://developers.home-assistant.io/docs/apps/presentation#keeping-a-changelog -->
 # Changelog
 
+## 0.1.6
+
+- Remove `logo.png` so the Home Assistant add-on page no longer shows a large logo header image.
+
 ## 0.1.5
 
 - Replace template `icon.png` and `logo.png` assets with Actual Budget branding assets.
