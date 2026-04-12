@@ -1,6 +1,10 @@
 <!-- https://developers.home-assistant.io/docs/apps/presentation#keeping-a-changelog -->
 # Changelog
 
+## 0.1.3
+
+- Fix AppArmor policy for Node native modules by allowing memory mapping of `/app/**/*.node` files.
+
 ## 0.1.2
 
 - Add a custom AppArmor profile (`apparmor.txt`) to improve add-on security posture.
