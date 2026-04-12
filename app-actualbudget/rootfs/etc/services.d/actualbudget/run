@@ -95,7 +95,7 @@ for (( i=0; i < extra_env_count; i++ )); do
 done
 
 bashio::log.blue '-----------------------------------------------------------'
-bashio::log.blue ' Add-on: app-actualbudget'
+bashio::log.blue ' Add-on: Actual Budget'
 bashio::log.blue ' Self-hosted Actual Budget server for Home Assistant'
 bashio::log.blue '-----------------------------------------------------------'
 bashio::log.blue " Add-on version: ${app_version}"

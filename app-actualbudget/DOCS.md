@@ -1,4 +1,4 @@
-# Home Assistant App: app-actualbudget
+# Home Assistant App: Actual Budget
 
 This app runs the official Actual Budget server in Home Assistant.
 

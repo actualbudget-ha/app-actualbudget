@@ -1,4 +1,4 @@
-# Home Assistant App Repository: app-actualbudget
+# Home Assistant App Repository: Actual Budget
 
 Apps (formerly known as add-ons) for Home Assistant allow you to extend your
 Home Assistant installation with additional services.

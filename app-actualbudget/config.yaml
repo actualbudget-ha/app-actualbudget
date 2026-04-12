@@ -1,7 +1,7 @@
 ---
-version: 0.1.4
+version: 0.1.5
 slug: app-actualbudget
-name: app-actualbudget
+name: Actual Budget
 description: Self-hosted Actual Budget server for Home Assistant.
 url: https://github.com/actualbudget-ha/app-actualbudget/tree/main/app-actualbudget
 arch:

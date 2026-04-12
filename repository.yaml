@@ -1,4 +1,4 @@
 # https://developers.home-assistant.io/docs/apps/repository#repository-configuration
-name: app-actualbudget Home Assistant app repository
+name: Actual Budget Home Assistant app repository
 url: 'https://github.com/actualbudget-ha/app-actualbudget'
 maintainer: Your Name <you@example.com>

@@ -1,6 +1,12 @@
 <!-- https://developers.home-assistant.io/docs/apps/presentation#keeping-a-changelog -->
 # Changelog
 
+## 0.1.5
+
+- Replace template `icon.png` and `logo.png` assets with Actual Budget branding assets.
+- Update user-facing add-on naming from slug-style text to `Actual Budget`.
+- Replace repository maintainer placeholder metadata.
+
 ## 0.1.4
 
 - Bump upstream Actual Budget server image from `26.3.0` to `26.4.0`.

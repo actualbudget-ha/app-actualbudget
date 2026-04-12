@@ -78,7 +78,7 @@ LABEL \
     io.hass.type="addon" \
     io.hass.arch="${BUILD_ARCH}" \
     io.hass.version="${BUILD_VERSION}" \
-    org.opencontainers.image.title="Home Assistant App: app-actualbudget" \
+    org.opencontainers.image.title="Home Assistant App: Actual Budget" \
     org.opencontainers.image.description="Self-hosted Actual Budget server for Home Assistant." \
     org.opencontainers.image.source="https://github.com/actualbudget-ha/app-actualbudget" \
     org.opencontainers.image.licenses="MIT"

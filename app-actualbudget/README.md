@@ -1,4 +1,4 @@
-# Home Assistant App: app-actualbudget
+# Home Assistant App: Actual Budget
 
 Self-hosted Actual Budget server for Home Assistant.
 
