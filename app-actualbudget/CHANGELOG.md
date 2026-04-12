@@ -1,6 +1,10 @@
 <!-- https://developers.home-assistant.io/docs/apps/presentation#keeping-a-changelog -->
 # Changelog
 
+## 0.1.4
+
+- Bump upstream Actual Budget server image from `26.3.0` to `26.4.0`.
+
 ## 0.1.3
 
 - Fix AppArmor policy for Node native modules by allowing memory mapping of `/app/**/*.node` files.
