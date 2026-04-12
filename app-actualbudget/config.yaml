@@ -1,5 +1,5 @@
 ---
-version: 0.1.1
+version: 0.1.2
 slug: app-actualbudget
 name: app-actualbudget
 description: Self-hosted Actual Budget server for Home Assistant.

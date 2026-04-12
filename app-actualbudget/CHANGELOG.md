@@ -1,6 +1,10 @@
 <!-- https://developers.home-assistant.io/docs/apps/presentation#keeping-a-changelog -->
 # Changelog
 
+## 0.1.2
+
+- Add a custom AppArmor profile (`apparmor.txt`) to improve add-on security posture.
+
 ## 0.1.1
 
 - Disable Home Assistant Ingress by default and document direct port access as the supported mode.

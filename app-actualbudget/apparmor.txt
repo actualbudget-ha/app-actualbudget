@@ -1,0 +1,70 @@
+#include <tunables/global>
+
+profile app-actualbudget flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+
+  file,
+  signal,
+
+  # S6-Overlay and init scripts
+  /init rix,
+  /bin/** ix,
+  /usr/bin/** ix,
+  /usr/local/bin/** ix,
+  /command/** ix,
+  /package/** ix,
+  /etc/s6/** rix,
+  /run/{s6,s6-rc*,service}/** rwix,
+  /etc/services.d/** rwix,
+  /etc/cont-init.d/** rwix,
+  /etc/cont-finish.d/** rwix,
+  /run/** rwk,
+  /dev/tty rw,
+
+  # Bashio and temporary files used by startup validation scripts
+  /usr/lib/bashio/** ix,
+  /tmp/** rwk,
+
+  # Add-on data and optional mapped paths
+  /data/** rw,
+  /ssl/** r,
+  /share/** r,
+
+  # Start the Actual server under a dedicated profile
+  /usr/local/bin/node cx -> app-actualbudget-node,
+  /usr/bin/node cx -> app-actualbudget-node,
+
+  profile app-actualbudget-node flags=(attach_disconnected,mediate_deleted) {
+    #include <abstractions/base>
+    #include <abstractions/nameservice>
+
+    signal receive,
+
+    # Runtime binaries and app source
+    /usr/local/bin/node rm,
+    /usr/bin/node rm,
+    /app/** r,
+
+    # App data and optional cert/material mounts
+    /data/** rwk,
+    /ssl/** r,
+    /share/** r,
+    /tmp/** rwk,
+
+    # Common runtime files accessed by Node/OpenSSL
+    /etc/hosts r,
+    /etc/hostname r,
+    /etc/resolv.conf r,
+    /etc/nsswitch.conf r,
+    /etc/passwd r,
+    /etc/group r,
+    /etc/ssl/** r,
+    /proc/** r,
+
+    # Network access needed for serving UI and outbound sync calls
+    network inet stream,
+    network inet6 stream,
+    network inet dgram,
+    network inet6 dgram,
+  }
+}
