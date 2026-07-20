@@ -2,6 +2,7 @@ name: Builder
 
 env:
   MONITORED_FILES: "build.yaml config.json config.yaml config.yml Dockerfile rootfs translations"
+  REPOSITORY_MONITORED_FILES: "repository.yaml .github/workflows/builder.yaml .github/workflows/build-app.yaml"
 
 on:
   workflow_dispatch:
@@ -45,16 +46,24 @@ jobs:
         env:
           APPS: ${{ steps.apps.outputs.addons }}
           CHANGED_FILES: ${{ steps.changed_files.outputs.all_changed_files }}
+          REPOSITORY_MONITORED_FILES: ${{ env.REPOSITORY_MONITORED_FILES }}
         run: |
           changed_apps=()
 
           # For manual runs, rebuild all apps.
           if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
             changed_apps=(${APPS})
-          # If the workflow file itself changed, rebuild all apps.
-          elif [[ "${CHANGED_FILES}" =~ \.github/workflows/(builder|build-app)\.yaml ]]; then
-            changed_apps=(${APPS})
+          # If repository-level build metadata changed, rebuild all apps.
           else
+            for file in ${REPOSITORY_MONITORED_FILES}; do
+              if [[ " ${CHANGED_FILES} " == *" ${file} "* ]]; then
+                changed_apps=(${APPS})
+                break
+              fi
+            done
+          fi
+
+          if [[ ${#changed_apps[@]} -eq 0 ]]; then
             for app in ${APPS}; do
               for file in ${MONITORED_FILES}; do
                 if [[ "${CHANGED_FILES}" =~ ${app}/${file} ]]; then

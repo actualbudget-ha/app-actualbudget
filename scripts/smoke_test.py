@@ -19,6 +19,7 @@ IMAGE_NAME = "app-actualbudget:smoke-test"
 DEFAULT_CONTAINER = "app-actualbudget-smoke-default"
 OPTIONS_CONTAINER = "app-actualbudget-smoke-options"
 INGRESS_COMPAT_CONTAINER = "app-actualbudget-smoke-ingress-compat"
+RESERVED_ENV_CONTAINER = "app-actualbudget-smoke-reserved-env"
 
 
 def run_cmd(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -230,6 +231,66 @@ def run_ingress_compat_test(timeout_seconds: int) -> None:
         docker_rm(INGRESS_COMPAT_CONTAINER)
 
 
+def wait_container_exited(container: str, timeout_seconds: int = 30) -> bool:
+    deadline = time.time() + timeout_seconds
+    while time.time() < deadline:
+        result = run_cmd(
+            "docker",
+            "inspect",
+            "-f",
+            "{{.State.Running}}",
+            container,
+            check=False,
+        )
+        if result.returncode == 0 and result.stdout.strip() == "false":
+            return True
+        time.sleep(1)
+    return False
+
+
+def run_reserved_env_test() -> None:
+    docker_rm(RESERVED_ENV_CONTAINER)
+    tmp_dir = Path(tempfile.mkdtemp(prefix="app-actualbudget-smoke-"))
+    try:
+        options_path = tmp_dir / "options.json"
+        options_path.write_text(
+            json.dumps(
+                {
+                    "extra_env_vars": ["ACTUAL_PORT=9999"],
+                },
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+        run_cmd(
+            "docker",
+            "run",
+            "-d",
+            "--name",
+            RESERVED_ENV_CONTAINER,
+            "-v",
+            f"{tmp_dir}:/data",
+            IMAGE_NAME,
+        )
+        try:
+            if not wait_container_exited(RESERVED_ENV_CONTAINER):
+                raise RuntimeError(
+                    "Reserved environment variable test failed: container did not stop.\n"
+                    f"Container logs:\n{get_logs(RESERVED_ENV_CONTAINER)}"
+                )
+
+            logs = get_logs(RESERVED_ENV_CONTAINER)
+            if "Reserved environment variable in extra_env_vars: 'ACTUAL_PORT'" not in logs:
+                raise RuntimeError(
+                    "Reserved environment variable test failed: expected validation error missing.\n"
+                    f"Container logs:\n{logs}"
+                )
+        finally:
+            docker_rm(RESERVED_ENV_CONTAINER)
+    finally:
+        cleanup_temp_dir(tmp_dir)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Build and smoke-test the app-actualbudget add-on image."
@@ -251,6 +312,7 @@ def main() -> int:
         run_default_test(timeout_seconds=args.timeout_seconds)
         run_options_test(timeout_seconds=args.timeout_seconds)
         run_ingress_compat_test(timeout_seconds=args.timeout_seconds)
+        run_reserved_env_test()
     except Exception as err:  # noqa: BLE001 - CLI wrapper
         print(f"Smoke test FAILED: {err}", file=sys.stderr)
         return 1

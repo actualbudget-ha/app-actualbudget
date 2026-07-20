@@ -71,6 +71,7 @@ jobs:
             app-actualbudget/rootfs/etc/cont-init.d/00-validate.sh
             app-actualbudget/rootfs/etc/services.d/actualbudget/run
             app-actualbudget/rootfs/etc/services.d/actualbudget/finish
+            app-actualbudget/rootfs/usr/share/actualbudget/config.sh
 
   version-check:
     name: Version consistency

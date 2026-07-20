@@ -71,7 +71,7 @@ ENV APP_VERSION="${BUILD_VERSION}"
 
 COPY rootfs /
 RUN \
-    find /etc/cont-init.d /etc/services.d -type f -exec sed -i 's/\r$//' {} + \
+    find /etc/cont-init.d /etc/services.d /usr/share/actualbudget -type f -exec sed -i 's/\r$//' {} + \
     && find /etc/cont-init.d /etc/services.d -type f -exec chmod a+x {} +
 
 LABEL \

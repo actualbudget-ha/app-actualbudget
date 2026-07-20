@@ -39,6 +39,11 @@ These options map directly to Actual server environment variables:
 For all server settings, see:
 https://actualbudget.org/docs/config/
 
+`extra_env_vars` is intended for advanced Actual settings that do not have a
+dedicated app option, such as OpenID or trusted proxy settings. It cannot
+override app-managed network, TLS, upload limit, storage, or process runtime
+variables. Use the dedicated app options for those settings.
+
 Default app options are optimized for common Home Assistant setups:
 
 - `hostname` defaults to `0.0.0.0` (IPv4 bind on all interfaces)
@@ -71,7 +76,8 @@ When setting `https_key` and `https_cert`:
 3. (Optional) Open `http://<ha-host>:5006` and confirm it loads for non-TLS testing.
 4. Restart the app and confirm existing data is still present.
 5. Set an invalid `https_key` or `https_cert` path and confirm startup fails fast with clear logs.
-6. Restore valid TLS configuration and confirm clean startup logs with add-on and Actual server version lines.
+6. Set a reserved `extra_env_vars` entry such as `ACTUAL_PORT=9999` and confirm startup fails fast with clear logs.
+7. Restore valid configuration and confirm clean startup logs with add-on and Actual server version lines.
 
 ## Troubleshooting
 
@@ -79,6 +85,7 @@ When setting `https_key` and `https_cert`:
 - For startup failures, verify:
   - `https_key`/`https_cert` are valid existing files.
   - `extra_env_vars` entries are valid `KEY=VALUE`.
+  - `extra_env_vars` entries do not use reserved app-managed or runtime environment variable names.
   - port `5006` is not blocked by another service.
 
 ## Support

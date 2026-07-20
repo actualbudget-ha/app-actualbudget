@@ -4,6 +4,7 @@
 ## 0.1.6
 
 - Remove `logo.png` so the Home Assistant add-on page no longer shows a large logo header image.
+- Reject reserved `extra_env_vars` names that would override app-managed network, TLS, upload limit, storage, or process runtime settings.
 
 ## 0.1.5
 

@@ -25,4 +25,4 @@ configuration:
     description: "Verbosity for app wrapper startup logs."
   extra_env_vars:
     name: Extra Environment Variables
-    description: "Optional KEY=VALUE entries exported before starting Actual server."
+    description: "Optional advanced Actual KEY=VALUE entries. Reserved app-managed and runtime variables are rejected."

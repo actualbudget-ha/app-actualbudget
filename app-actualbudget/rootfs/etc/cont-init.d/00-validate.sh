@@ -12,35 +12,8 @@ declare env_entry
 declare env_name
 declare has_supervisor
 
-read_config() {
-    local key=$1
-    local value
-
-    value=''
-    if [[ "${has_supervisor}" == 'true' ]]; then
-        value="$(bashio::config "${key}" 2>/dev/null || true)"
-    fi
-
-    if [[ -z "${value}" || "${value}" == "null" ]] && [[ -f /data/options.json ]]; then
-        value="$(jq -er ".${key}" /data/options.json 2>/dev/null || true)"
-    fi
-
-    printf '%s' "${value}"
-}
-
-config_or_default() {
-    local key=$1
-    local default_value=$2
-    local value
-
-    value="$(read_config "${key}")"
-    if [[ -z "${value}" ]] || [[ "${value}" == "null" ]]; then
-        printf '%s' "${default_value}"
-        return
-    fi
-
-    printf '%s' "${value}"
-}
+# shellcheck source=/dev/null
+source /usr/share/actualbudget/config.sh
 
 validate_path_option() {
     local option_value=$1
@@ -59,10 +32,7 @@ validate_path_option() {
     fi
 }
 
-has_supervisor='false'
-if [[ -n "${SUPERVISOR_TOKEN:-}" ]]; then
-    has_supervisor='true'
-fi
+init_config
 
 https_key="$(config_or_default 'https_key' '')"
 https_cert="$(config_or_default 'https_cert' '')"
@@ -92,11 +62,7 @@ for (( i=0; i < extra_env_count; i++ )); do
     fi
 
     env_name="${env_entry%%=*}"
-    if ! [[ "${env_name}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
-        bashio::log.error \
-            "Invalid environment variable name in extra_env_vars: '${env_name}'"
-        exit 1
-    fi
+    validate_extra_env_name "${env_name}"
 done
 
 bashio::log.info "Configuration validation completed"
