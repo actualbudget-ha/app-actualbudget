@@ -1,0 +1,213 @@
+name: Update Actual server
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 6 * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-actual-server
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Check for upstream Actual server updates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v6.0.2
+        with:
+          token: ${{ secrets.PR_TOKEN || github.token }}
+          persist-credentials: true
+
+      - name: Check latest upstream version
+        id: update
+        shell: python
+        run: |
+          import json
+          import os
+          import re
+          import urllib.request
+          from pathlib import Path
+
+          root = Path(".")
+          dockerfile = root / "app-actualbudget" / "Dockerfile"
+          build_yaml = root / "app-actualbudget" / "build.yaml"
+          config_yaml = root / "app-actualbudget" / "config.yaml"
+          changelog = root / "app-actualbudget" / "CHANGELOG.md"
+
+          def version_tuple(value):
+              return tuple(int(part) for part in value.split("."))
+
+          docker_text = dockerfile.read_text(encoding="utf-8")
+          current_actual_match = re.search(
+              r"docker\.io/actualbudget/actual-server:([0-9]+\.[0-9]+\.[0-9]+)",
+              docker_text,
+          )
+          if current_actual_match is None:
+              raise RuntimeError("Could not find current Actual server version in Dockerfile")
+
+          current_actual = current_actual_match.group(1)
+          tags = []
+          url = "https://registry.hub.docker.com/v2/repositories/actualbudget/actual-server/tags?page_size=100"
+          while url:
+              with urllib.request.urlopen(url, timeout=30) as response:
+                  payload = json.load(response)
+              tags.extend(item["name"] for item in payload.get("results", []))
+              url = payload.get("next")
+
+          versions = [
+              tuple(int(part) for part in tag.split("."))
+              for tag in tags
+              if re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", tag)
+          ]
+          if not versions:
+              raise RuntimeError("Could not find semver Actual server tags on Docker Hub")
+
+          latest_version = max(versions)
+          current_version = version_tuple(current_actual)
+          latest_actual = ".".join(str(part) for part in latest_version)
+          github_output = Path(os.environ["GITHUB_OUTPUT"])
+          with github_output.open("a", encoding="utf-8") as output:
+              print(f"current_actual={current_actual}", file=output)
+              print(f"latest_actual={latest_actual}", file=output)
+
+          if latest_version <= current_version:
+              with github_output.open("a", encoding="utf-8") as output:
+                  print("updated=false", file=output)
+              print(f"Actual server is already current or ahead: {current_actual}")
+              raise SystemExit(0)
+
+          config_text = config_yaml.read_text(encoding="utf-8")
+          current_app_match = re.search(r"^version:\s*([0-9]+)\.([0-9]+)\.([0-9]+)\s*$", config_text, re.MULTILINE)
+          if current_app_match is None:
+              raise RuntimeError("Could not find add-on version in config.yaml")
+
+          major, minor, patch = (int(part) for part in current_app_match.groups())
+          next_app = f"{major}.{minor}.{patch + 1}"
+
+          image_pattern = re.compile(
+              r"docker\.io/actualbudget/actual-server:[0-9]+\.[0-9]+\.[0-9]+"
+          )
+          dockerfile.write_text(
+              image_pattern.sub(f"docker.io/actualbudget/actual-server:{latest_actual}", docker_text),
+              encoding="utf-8",
+          )
+          build_yaml.write_text(
+              image_pattern.sub(
+                  f"docker.io/actualbudget/actual-server:{latest_actual}",
+                  build_yaml.read_text(encoding="utf-8"),
+              ),
+              encoding="utf-8",
+          )
+          config_yaml.write_text(
+              re.sub(
+                  r"^version:\s*[0-9]+\.[0-9]+\.[0-9]+\s*$",
+                  f"version: {next_app}",
+                  config_text,
+                  count=1,
+                  flags=re.MULTILINE,
+              ),
+              encoding="utf-8",
+          )
+
+          changelog_text = changelog.read_text(encoding="utf-8")
+          heading = f"## {next_app}\n\n"
+          entry = (
+              f"{heading}"
+              f"- Bump upstream Actual Budget server image from `{current_actual}` to `{latest_actual}`.\n\n"
+          )
+          if heading not in changelog_text:
+              changelog.write_text(
+                  changelog_text.replace("# Changelog\n\n", f"# Changelog\n\n{entry}", 1),
+                  encoding="utf-8",
+              )
+
+          with github_output.open("a", encoding="utf-8") as output:
+              print("updated=true", file=output)
+              print(f"next_app={next_app}", file=output)
+
+      - name: Validate update consistency
+        if: steps.update.outputs.updated == 'true'
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          dockerfile = Path("app-actualbudget/Dockerfile")
+          build_yaml = Path("app-actualbudget/build.yaml")
+          config_yaml = Path("app-actualbudget/config.yaml")
+          changelog = Path("app-actualbudget/CHANGELOG.md")
+
+          docker_text = dockerfile.read_text(encoding="utf-8")
+          docker_match = re.search(
+              r"ARG BUILD_FROM=docker\.io/actualbudget/actual-server:([0-9]+\.[0-9]+\.[0-9]+)",
+              docker_text,
+          )
+          if docker_match is None:
+              raise SystemExit("Dockerfile Actual server pin is missing")
+
+          actual_version = docker_match.group(1)
+          expected_image = f"docker.io/actualbudget/actual-server:{actual_version}"
+          build_text = build_yaml.read_text(encoding="utf-8")
+          if build_text.count(expected_image) != 2:
+              raise SystemExit("build.yaml Actual server pins are not aligned with Dockerfile")
+
+          config_match = re.search(
+              r"^version:\s*([0-9]+\.[0-9]+\.[0-9]+)\s*$",
+              config_yaml.read_text(encoding="utf-8"),
+              re.MULTILINE,
+          )
+          if config_match is None:
+              raise SystemExit("config.yaml add-on version is missing")
+
+          app_version = config_match.group(1)
+          changelog_text = changelog.read_text(encoding="utf-8")
+          if f"## {app_version}\n" not in changelog_text:
+              raise SystemExit("CHANGELOG.md does not contain the new add-on version")
+          if f"to `{actual_version}`" not in changelog_text:
+              raise SystemExit("CHANGELOG.md does not mention the new Actual server version")
+          PY
+
+      - name: Create pull request
+        if: steps.update.outputs.updated == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PR_TOKEN || github.token }}
+          CURRENT_ACTUAL: ${{ steps.update.outputs.current_actual }}
+          LATEST_ACTUAL: ${{ steps.update.outputs.latest_actual }}
+          NEXT_APP: ${{ steps.update.outputs.next_app }}
+        run: |
+          set -euo pipefail
+
+          branch="automation/update-actual-server-${LATEST_ACTUAL}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "${branch}"
+          git add app-actualbudget/Dockerfile app-actualbudget/build.yaml app-actualbudget/config.yaml app-actualbudget/CHANGELOG.md
+          git commit -m "Bump Actual server to ${LATEST_ACTUAL}"
+          git push --force-with-lease origin "${branch}"
+
+          body="$(printf '%s\n\n%s\n' \
+            "Updates the upstream Actual Budget server image from \`${CURRENT_ACTUAL}\` to \`${LATEST_ACTUAL}\`." \
+            "This also bumps the Home Assistant app version to \`${NEXT_APP}\` so users receive the updated image.")"
+
+          existing_pr="$(gh pr list --head "${branch}" --json number --jq '.[0].number // empty')"
+          if [[ -n "${existing_pr}" ]]; then
+            gh pr edit "${existing_pr}" \
+              --title "Bump Actual server to ${LATEST_ACTUAL}" \
+              --body "${body}"
+          else
+            gh pr create \
+              --base "${{ github.event.repository.default_branch }}" \
+              --head "${branch}" \
+              --title "Bump Actual server to ${LATEST_ACTUAL}" \
+              --body "${body}"
+          fi
+
+      - name: Report no update
+        if: steps.update.outputs.updated == 'false'
+        run: echo "Actual server is already up to date at ${{ steps.update.outputs.current_actual }}."

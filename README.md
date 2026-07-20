@@ -34,6 +34,19 @@ uv run yamllint repository.yaml app-actualbudget/config.yaml app-actualbudget/bu
 uv run python scripts/smoke_test.py
 ```
 
+## Automated upstream updates
+
+The `Update Actual server` workflow checks Docker Hub daily for new
+`actualbudget/actual-server` semver tags. When a newer tag exists, it opens or
+updates a pull request that changes `app-actualbudget/Dockerfile`,
+`app-actualbudget/build.yaml`, `app-actualbudget/config.yaml`, and
+`app-actualbudget/CHANGELOG.md` together.
+
+By default it uses the built-in `GITHUB_TOKEN`. If your repository does not
+allow GitHub Actions to create pull requests, or if you want CI workflows to run
+automatically on generated pull requests, configure a repository secret named
+`PR_TOKEN` with permission to push branches and open pull requests.
+
 ## Publishing checklist
 
 1. Update `app-actualbudget/config.yaml`:
