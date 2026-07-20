@@ -3,7 +3,7 @@ name: Update Actual server
 on:
   workflow_dispatch:
   schedule:
-    - cron: "30 6 * * *"
+    - cron: "30 6 * * 1"
 
 permissions:
   contents: write
@@ -191,9 +191,10 @@ jobs:
           git commit -m "Bump Actual server to ${LATEST_ACTUAL}"
           git push --force-with-lease origin "${branch}"
 
-          body="$(printf '%s\n\n%s\n' \
+          body="$(printf '%s\n\n%s\n\n%s\n' \
             "Updates the upstream Actual Budget server image from \`${CURRENT_ACTUAL}\` to \`${LATEST_ACTUAL}\`." \
-            "This also bumps the Home Assistant app version to \`${NEXT_APP}\` so users receive the updated image.")"
+            "This also bumps the Home Assistant app version to \`${NEXT_APP}\` so users receive the updated image." \
+            "Before upgrading, take a Home Assistant backup so you can restore the previous Actual data if the upstream migration fails.")"
 
           existing_pr="$(gh pr list --head "${branch}" --json number --jq '.[0].number // empty')"
           if [[ -n "${existing_pr}" ]]; then

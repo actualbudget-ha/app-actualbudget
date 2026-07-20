@@ -36,7 +36,7 @@ uv run python scripts/smoke_test.py
 
 ## Automated upstream updates
 
-The `Update Actual server` workflow checks Docker Hub daily for new
+The `Update Actual server` workflow checks Docker Hub weekly for new
 `actualbudget/actual-server` semver tags. When a newer tag exists, it opens or
 updates a pull request that changes `app-actualbudget/Dockerfile`,
 `app-actualbudget/build.yaml`, `app-actualbudget/config.yaml`, and

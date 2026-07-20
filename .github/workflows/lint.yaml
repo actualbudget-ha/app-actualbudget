@@ -73,6 +73,16 @@ jobs:
             app-actualbudget/rootfs/etc/services.d/actualbudget/finish
             app-actualbudget/rootfs/usr/share/actualbudget/config.sh
 
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⤵️ Check out code from GitHub
+        uses: actions/checkout@v7.0.0
+
+      - name: 🔎 Run actionlint
+        uses: raven-actions/actionlint@v2
+
   version-check:
     name: Version consistency
     runs-on: ubuntu-latest
@@ -92,3 +102,36 @@ jobs:
             echo "Version mismatch between config.yaml and CHANGELOG.md"
             exit 1
           fi
+
+  actual-image-version-check:
+    name: Actual image version consistency
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⤵️ Check out code from GitHub
+        uses: actions/checkout@v7.0.0
+
+      - name: 🔎 Validate Actual server image pins
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          dockerfile = Path("app-actualbudget/Dockerfile")
+          build_yaml = Path("app-actualbudget/build.yaml")
+
+          docker_match = re.search(
+              r"ARG BUILD_FROM=docker\.io/actualbudget/actual-server:([0-9]+\.[0-9]+\.[0-9]+)",
+              dockerfile.read_text(encoding="utf-8"),
+          )
+          if docker_match is None:
+              raise SystemExit("Dockerfile Actual server image pin is missing")
+
+          actual_version = docker_match.group(1)
+          expected_image = f"docker.io/actualbudget/actual-server:{actual_version}"
+          build_text = build_yaml.read_text(encoding="utf-8")
+
+          if build_text.count(expected_image) != 2:
+              raise SystemExit(
+                  "build.yaml Actual server image pins must match Dockerfile for both architectures"
+              )
+          PY
