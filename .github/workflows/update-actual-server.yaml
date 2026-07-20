@@ -21,7 +21,7 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v6.0.2
         with:
-          token: ${{ secrets.PR_TOKEN || github.token }}
+          token: ${{ secrets.PR_TOKEN != '' && secrets.PR_TOKEN || github.token }}
           persist-credentials: true
 
       - name: Check latest upstream version
@@ -176,7 +176,7 @@ jobs:
       - name: Create pull request
         if: steps.update.outputs.updated == 'true'
         env:
-          GH_TOKEN: ${{ secrets.PR_TOKEN || github.token }}
+          GH_TOKEN: ${{ secrets.PR_TOKEN != '' && secrets.PR_TOKEN || github.token }}
           CURRENT_ACTUAL: ${{ steps.update.outputs.current_actual }}
           LATEST_ACTUAL: ${{ steps.update.outputs.latest_actual }}
           NEXT_APP: ${{ steps.update.outputs.next_app }}

@@ -10,7 +10,6 @@ declare https_cert
 declare extra_env_count
 declare env_entry
 declare env_name
-declare has_supervisor
 
 # shellcheck source=/dev/null
 source /usr/share/actualbudget/config.sh
