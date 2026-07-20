@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7.0.0
         with:
           token: ${{ secrets.PR_TOKEN != '' && secrets.PR_TOKEN || github.token }}
           persist-credentials: true
