@@ -48,24 +48,27 @@ jobs:
           CHANGED_FILES: ${{ steps.changed_files.outputs.all_changed_files }}
           REPOSITORY_MONITORED_FILES: ${{ env.REPOSITORY_MONITORED_FILES }}
         run: |
+          read -r -a apps <<< "${APPS}"
+          read -r -a monitored_files <<< "${MONITORED_FILES}"
+          read -r -a repository_monitored_files <<< "${REPOSITORY_MONITORED_FILES}"
           changed_apps=()
 
           # For manual runs, rebuild all apps.
           if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            changed_apps=(${APPS})
+            changed_apps=("${apps[@]}")
           # If repository-level build metadata changed, rebuild all apps.
           else
-            for file in ${REPOSITORY_MONITORED_FILES}; do
+            for file in "${repository_monitored_files[@]}"; do
               if [[ " ${CHANGED_FILES} " == *" ${file} "* ]]; then
-                changed_apps=(${APPS})
+                changed_apps=("${apps[@]}")
                 break
               fi
             done
           fi
 
           if [[ ${#changed_apps[@]} -eq 0 ]]; then
-            for app in ${APPS}; do
-              for file in ${MONITORED_FILES}; do
+            for app in "${apps[@]}"; do
+              for file in "${monitored_files[@]}"; do
                 if [[ "${CHANGED_FILES}" =~ ${app}/${file} ]]; then
                   changed_apps+=("${app}")
                   break
