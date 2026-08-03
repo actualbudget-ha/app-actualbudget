@@ -1,7 +1,7 @@
 ---
 build_from:
-  aarch64: docker.io/actualbudget/actual-server:26.7.0
-  amd64: docker.io/actualbudget/actual-server:26.7.0
+  aarch64: docker.io/actualbudget/actual-server:26.8.0
+  amd64: docker.io/actualbudget/actual-server:26.8.0
 args:
   BASHIO_VERSION: 0.17.1
   TEMPIO_VERSION: 2024.11.2
