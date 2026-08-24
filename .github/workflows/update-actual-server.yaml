@@ -219,6 +219,7 @@ jobs:
           branch="automation/update-actual-server-${LATEST_ACTUAL}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin "${branch}" || true
           git checkout -B "${branch}"
           git add app-actualbudget/Dockerfile app-actualbudget/build.yaml app-actualbudget/config.yaml app-actualbudget/CHANGELOG.md
           git commit -m "Bump Actual server to ${LATEST_ACTUAL}"
