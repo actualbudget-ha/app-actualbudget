@@ -52,24 +52,57 @@ jobs:
               raise RuntimeError("Could not find current Actual server version in Dockerfile")
 
           current_actual = current_actual_match.group(1)
-          tags = []
-          url = "https://registry.hub.docker.com/v2/repositories/actualbudget/actual-server/tags?page_size=100"
+
+          def fetch_json(url):
+              request = urllib.request.Request(
+                  url,
+                  headers={"User-Agent": "actualbudget-ha-update-workflow/1.0"},
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  return json.load(response)
+
+          # Docker Hub rejects anonymous pagination after an offset of 1,000 tags.
+          # Resolve the digest behind `latest`, then consider only stable tags in the
+          # currently supported major version instead of enumerating every image tag.
+          latest_tag = fetch_json(
+              "https://registry.hub.docker.com/v2/repositories/actualbudget/actual-server/tags/latest"
+          )
+          latest_digest = latest_tag.get("digest")
+          if not latest_digest:
+              raise RuntimeError("Could not find the Docker Hub digest for the latest Actual server image")
+
+          current_version = version_tuple(current_actual)
+          stable_tags = []
+          url = (
+              "https://registry.hub.docker.com/v2/repositories/actualbudget/actual-server/tags"
+              f"?page_size=100&name={current_version[0]}."
+          )
           while url:
-              with urllib.request.urlopen(url, timeout=30) as response:
-                  payload = json.load(response)
-              tags.extend(item["name"] for item in payload.get("results", []))
+              payload = fetch_json(url)
+              stable_tags.extend(payload.get("results", []))
               url = payload.get("next")
 
           versions = [
-              tuple(int(part) for part in tag.split("."))
-              for tag in tags
-              if re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", tag)
+              tuple(int(part) for part in tag["name"].split("."))
+              for tag in stable_tags
+              if tag.get("digest") == latest_digest
+              and re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", tag.get("name", ""))
           ]
           if not versions:
-              raise RuntimeError("Could not find semver Actual server tags on Docker Hub")
+              github_output = Path(os.environ["GITHUB_OUTPUT"])
+              with github_output.open("a", encoding="utf-8") as output:
+                  print(f"current_actual={current_actual}", file=output)
+                  print(f"latest_actual={current_actual}", file=output)
+                  print("updated=false", file=output)
+                  print("major_update_available=true", file=output)
+              print(
+                  "The latest Actual server image does not have a stable tag in "
+                  f"the supported major version ({current_version[0]}). "
+                  "A major-version upgrade requires manual review."
+              )
+              raise SystemExit(0)
 
           latest_version = max(versions)
-          current_version = version_tuple(current_actual)
           latest_actual = ".".join(str(part) for part in latest_version)
           github_output = Path(os.environ["GITHUB_OUTPUT"])
           with github_output.open("a", encoding="utf-8") as output:
@@ -211,4 +244,9 @@ jobs:
 
       - name: Report no update
         if: steps.update.outputs.updated == 'false'
-        run: echo "Actual server is already up to date at ${{ steps.update.outputs.current_actual }}."
+        run: |
+          if [[ "${{ steps.update.outputs.major_update_available }}" == "true" ]]; then
+            echo "A newer Actual server major version is available and requires manual review."
+          else
+            echo "Actual server is already up to date at ${{ steps.update.outputs.current_actual }}."
+          fi
