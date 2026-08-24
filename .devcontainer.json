@@ -1,5 +1,5 @@
 {
-  "name": "Example devcontainer for apps repositories",
+  "name": "app-actualbudget devcontainer",
   "image": "ghcr.io/home-assistant/devcontainer:4-apps",
   "overrideCommand": false,
   "remoteUser": "vscode",
