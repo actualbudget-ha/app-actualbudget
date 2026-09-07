@@ -1,6 +1,10 @@
 <!-- https://developers.home-assistant.io/docs/apps/presentation#keeping-a-changelog -->
 # Changelog
 
+## 0.1.10
+
+- Bump upstream Actual Budget server image from `26.8.1` to `26.9.0`.
+
 ## 0.1.9
 
 - Bump upstream Actual Budget server image from `26.8.0` to `26.8.1`.
