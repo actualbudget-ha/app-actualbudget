@@ -1,5 +1,5 @@
 # https://developers.home-assistant.io/docs/apps/configuration#app-dockerfile
-ARG BUILD_FROM=docker.io/actualbudget/actual-server:26.9.0
+ARG BUILD_FROM=docker.io/actualbudget/actual-server:26.10.0
 FROM ${BUILD_FROM}
 
 ENV \
